@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Мини‑CRM заявки</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Telegram Mini Apps -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- MAX Bridge -->
+  <script src="https://st.max.ru/js/max-web-app.js"></script>
+
+  <style>
+    :root {
+      --bg: #020617;
+      --bg-elevated: #0b1220;
+      --accent: #38bdf8;
+      --accent-soft: rgba(56,189,248,0.1);
+      --text: #f9fafb;
+      --text-muted: #9ca3af;
+      --border: #1f2937;
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+      --gap: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 16px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top left,#020617,#020617 40%, #020617 60%, #020617 100%);
+      color: var(--text);
+    }
+
+    .app {
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: linear-gradient(145deg, rgba(15,23,42,0.98), rgba(15,23,42,0.92));
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      padding: 16px 18px 18px;
+      box-shadow: 0 18px 40px rgba(15,23,42,0.8);
+    }
+
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      gap: 8px;
+    }
+
+    .title {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .pill {
+      padding: 3px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.7);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .user-line {
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .user-name {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: var(--gap);
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 10px 11px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      background: rgba(15,23,42,0.9);
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+      transition: border 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    textarea {
+      min-height: 72px;
+      resize: vertical;
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: #6b7280;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(56,189,248,0.6);
+      background: rgba(15,23,42,1);
+    }
+
+    .row {
+      display: flex;
+      gap: var(--gap);
+    }
+
+    .row > * {
+      flex: 1 1 0;
+    }
+
+    .primary-btn,
+    .ghost-btn {
+      border-radius: var(--radius-md);
+      padding: 11px 14px;
+      font-size: 14px;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      outline: none;
+      transition: transform 0.07s ease, box-shadow 0.07s ease,
+                  background 0.12s ease, color 0.12s ease;
+    }
+
+    .primary-btn {
+      background: linear-gradient(135deg, #38bdf8, #22c55e);
+      color: #020617;
+      box-shadow: 0 12px 30px rgba(34,197,94,0.45);
+      width: 100%;
+    }
+
+    .primary-btn:active {
+      transform: translateY(1px);
+      box-shadow: 0 4px 12px rgba(15,23,42,0.9);
+    }
+
+    .ghost-btn {
+      background: transparent;
+      border: 1px dashed rgba(148,163,184,0.5);
+      color: var(--text-muted);
+      width: 100%;
+    }
+
+    .ghost-btn:active {
+      transform: translateY(1px);
+      background: rgba(15,23,42,0.9);
+    }
+
+    .btn-row {
+      display: flex;
+      gap: var(--gap);
+      margin-top: 4px;
+    }
+
+    .hint {
+      margin-top: 10px;
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .hint b {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .list {
+      margin-top: 16px;
+      border-top: 1px dashed rgba(55,65,81,0.8);
+      padding-top: 12px;
+    }
+
+    .list-title {
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .item {
+      padding: 9px 11px;
+      border-radius: var(--radius-md);
+      background: radial-gradient(circle at top left,
+                    rgba(15,23,42,0.95), rgba(15,23,42,0.9));
+      border: 1px solid rgba(31,41,55,0.9);
+      margin-bottom: 8px;
+    }
+
+    .item-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .item-title {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.6);
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .badge--high {
+      border-color: rgba(248,113,113,0.9);
+      color: #fecaca;
+      background: rgba(248,113,113,0.12);
+    }
+
+    .item-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .item-comment {
+      margin-top: 4px;
+      font-size: 13px;
+      color: #e5e7eb;
+    }
+
+    .empty {
+      font-size: 12px;
+      color: var(--text-muted);
+      padding: 8px 0 2px;
+    }
+
+    .error {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #fecaca;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        scroll-behavior: auto !important;
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="card">
+      <header class="app-header">
+        <div class="title">Мини‑CRM заявки</div>
+        <div class="pill" id="platform-pill">Веб‑демо</div>
+      </header>
+
+      <div class="user-line" id="user-line">
+        Запусти приложение внутри <span class="user-name">Telegram</span> или MAX, чтобы увидеть своё имя.
+      </div>
+
+      <form id="lead-form">
+        <div>
+          <label for="title-input">Название заявки *</label>
+          <input id="title-input" type="text" placeholder="Например, Ремонт ноутбука">
+        </div>
+
+        <div>
+          <label for="comment-input">Комментарий</label>
+          <textarea id="comment-input" placeholder="Что нужно сделать клиенту?"></textarea>
+        </div>
+
+        <div class="row">
+          <div>
+            <label for="budget-input">Сумма, ₽</label>
+            <input id="budget-input" type="number" min="0" step="100" placeholder="Необязательно">
+          </div>
+          <div>
+            <label for="priority-input">Срочность</label>
+            <select id="priority-input">
+              <option value="normal">Обычная</option>
+              <option value="high">Высокая</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button type="submit" class="primary-btn">
+            <span>Добавить в список</span>
+          </button>
+          <button type="button" id="clear-btn" class="ghost-btn">
+            Очистить
+          </button>
+        </div>
+
+        <div class="hint" id="hint">
+          В Telegram можно отправить список обратно боту через <b>sendData</b>, а в MAX — через ваш API на бэкенде.
+        </div>
+        <div class="error" id="error" hidden></div>
+      </form>
+
+      <section class="list" id="list-section">
+        <div class="list-title">Текущие заявки</div>
+        <div id="items"></div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+      const max = window.WebApp && typeof window.WebApp.ready === "function" ? window.WebApp : null;
+
+      let platform = "web"; // 'telegram' | 'max' | 'web'
+
+      // Инициализация окружения Telegram
+      if (tg) {
+        platform = "telegram";
+        try {
+          tg.ready();
+          tg.expand && tg.expand();
+          tg.enableClosingConfirmation && tg.enableClosingConfirmation();
+          if (tg.themeParams && tg.themeParams.bg_color) {
+            document.body.style.backgroundColor = tg.themeParams.bg_color;
+          }
+        } catch (e) {
+          console.warn("Telegram init error", e);
+        }
+      // Инициализация окружения MAX
+      } else if (max) {
+        platform = "max";
+        try {
+          max.ready && max.ready();
+          max.enableClosingConfirmation && max.enableClosingConfirmation();
+        } catch (e) {
+          console.warn("MAX init error", e);
+        }
+      }
+
+      const form = document.getElementById("lead-form");
+      const titleInput = document.getElementById("title-input");
+      const commentInput = document.getElementById("comment-input");
+      const budgetInput = document.getElementById("budget-input");
+      const priorityInput = document.getElementById("priority-input");
+      const clearBtn = document.getElementById("clear-btn");
+      const itemsRoot = document.getElementById("items");
+      const platformPill = document.getElementById("platform-pill");
+      const userLine = document.getElementById("user-line");
+      const errorBox = document.getElementById("error");
+      const hint = document.getElementById("hint");
+
+      function setPlatformUI() {
+        if (platform === "telegram") {
+          platformPill.textContent = "Telegram Mini App";
+        } else if (platform === "max") {
+          platformPill.textContent = "MAX мини‑приложение";
+        } else {
+          platformPill.textContent = "Веб‑демо";
+        }
+
+        let unsafeUser = null;
+
+        if (platform === "telegram" && tg && tg.initDataUnsafe) {
+          unsafeUser = tg.initDataUnsafe.user || null;
+        } else if (platform === "max" && max && max.initDataUnsafe) {
+          unsafeUser = max.initDataUnsafe.user || null;
+        }
+
+        if (unsafeUser && (unsafeUser.first_name || unsafeUser.last_name)) {
+          const fullName = [unsafeUser.first_name, unsafeUser.last_name]
+            .filter(Boolean)
+            .join(" ");
+          userLine.innerHTML = 'Вы зашли как <span class="user-name">' + fullName + "</span>";
+        } else {
+          userLine.innerHTML =
+            'Запусти приложение внутри <span class="user-name">Telegram</span> или MAX, чтобы увидеть своё имя.';
+        }
+
+        if (platform === "telegram") {
+          hint.innerHTML =
+            "Нажми «Добавить в список», а затем можешь отправить данные боту через " +
+            "<b>Telegram.WebApp.sendData()</b> в обработчике — см. комментарий в коде.";
+        } else if (platform === "max") {
+          hint.innerHTML =
+            "MAX откроет это мини‑приложение внутри чата. Отправляй данные на свой бэкенд " +
+            "и отвечай пользователю уже из бота.";
+        } else {
+          hint.innerHTML =
+            "Это демо в браузере. В мессенджерах оно работает внутри окна Telegram или MAX без установки.";
+        }
+      }
+
+      const STORAGE_KEY = "mini_crm_leads_v1";
+
+      function loadLeads() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return [];
+          const parsed = JSON.parse(raw);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch (e) {
+          console.warn("Failed to load leads", e);
+          return [];
+        }
+      }
+
+      function saveLeads(leads) {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(leads));
+        } catch (e) {
+          console.warn("Failed to save leads", e);
+        }
+      }
+
+      let leads = loadLeads();
+      renderList();
+
+      function renderList() {
+        itemsRoot.innerHTML = "";
+        if (!leads.length) {
+          const p = document.createElement("p");
+          p.className = "empty";
+          p.textContent = "Пока нет ни одной заявки.";
+          itemsRoot.appendChild(p);
+          return;
+        }
+
+        leads.forEach((lead) => {
+          const div = document.createElement("div");
+          div.className = "item";
+
+          const header = document.createElement("div");
+          header.className = "item-header";
+
+          const title = document.createElement("div");
+          title.className = "item-title";
+          title.textContent = lead.title;
+
+          const badge = document.createElement("div");
+          badge.className = "badge" + (lead.priority === "high" ? " badge--high" : "");
+          badge.textContent = lead.priority === "high" ? "Срочно" : "Обычно";
+
+          header.appendChild(title);
+          header.appendChild(badge);
+
+          const meta = document.createElement("div");
+          meta.className = "item-meta";
+          const dateStr = new Date(lead.createdAt).toLocaleString();
+          meta.textContent =
+            (lead.budget ? `≈ ${lead.budget.toLocaleString("ru-RU")} ₽ • ` : "") + dateStr;
+
+          const comment = document.createElement("div");
+          comment.className = "item-comment";
+          comment.textContent = lead.comment || "Без комментария";
+
+          div.appendChild(header);
+          div.appendChild(meta);
+          div.appendChild(comment);
+
+          div.addEventListener("click", () => {
+            if (platform === "telegram" && tg && tg.HapticFeedback) {
+              try {
+                tg.HapticFeedback.impactOccurred("soft");
+              } catch (e) {}
+            } else if (platform === "max" && max && max.HapticFeedback) {
+              try {
+                max.HapticFeedback.impactOccurred("soft", false);
+              } catch (e) {}
+            }
+          });
+
+          itemsRoot.appendChild(div);
+        });
+      }
+
+      function showError(msg) {
+        errorBox.textContent = msg;
+        errorBox.hidden = !msg;
+      }
+
+      form.addEventListener("submit", function (event) {
+        event.preventDefault();
+        showError("");
+
+        const title = titleInput.value.trim();
+        const comment = commentInput.value.trim();
+        const budgetRaw = budgetInput.value.trim();
+        const priority = priorityInput.value;
+
+        if (!title) {
+          showError("Введите хотя бы название заявки.");
+          if (platform === "telegram" && tg && tg.HapticFeedback) {
+            try {
+              tg.HapticFeedback.notificationOccurred("error");
+            } catch (e) {}
+          } else if (platform === "max" && max && max.HapticFeedback) {
+            try {
+              max.HapticFeedback.notificationOccurred("error", false);
+            } catch (e) {}
+          }
+          return;
+        }
+
+        const budget = budgetRaw ? Number(budgetRaw) : null;
+
+        const lead = {
+          id: Date.now(),
+          title,
+          comment,
+          budget: Number.isFinite(budget) && budget > 0 ? budget : null,
+          priority,
+          createdAt: Date.now()
+        };
+
+        leads.unshift(lead);
+        saveLeads(leads);
+        renderList();
+
+        titleInput.value = "";
+        commentInput.value = "";
+        budgetInput.value = "";
+        priorityInput.value = "normal";
+
+        if (platform === "telegram" && tg && tg.HapticFeedback) {
+          try {
+            tg.HapticFeedback.notificationOccurred("success");
+          } catch (e) {}
+        } else if (platform === "max" && max && max.HapticFeedback) {
+          try {
+            max.HapticFeedback.notificationOccurred("success", false);
+          } catch (e) {}
+        }
+
+        /*
+         * Если хочешь сразу отправлять данные в Telegram‑бота, раскомментируй:
+         *
+         * if (platform === "telegram" && tg) {
+         *   tg.sendData(JSON.stringify({ type: "new_lead", payload: lead }));
+         * }
+         *
+         * На бэкенде обработай web_app_data / web_app_data_send.
+         */
+      });
+
+      clearBtn.addEventListener("click", function () {
+        if (!leads.length) return;
+        if (!confirm("Очистить список заявок на этом устройстве?")) return;
+        leads = [];
+        saveLeads(leads);
+        renderList();
+      });
+
+      // Кнопка "Назад" в шапке
+      if (platform === "telegram" && tg && tg.BackButton) {
+        try {
+          tg.BackButton.show();
+          tg.BackButton.onClick(function () {
+            tg.close();
+          });
+        } catch (e) {}
+      } else if (platform === "max" && max && max.BackButton) {
+        try {
+          max.BackButton.show();
+          max.BackButton.onClick(function () {
+            if (confirm("Закрыть мини‑приложение? Несохранённые данные могут пропасть.")) {
+              max.close();
+            }
+          });
+        } catch (e) {}
+      }
+
+      setPlatformUI();
+    })();
+  </script>
+</body>
+</html>
